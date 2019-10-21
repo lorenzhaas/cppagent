@@ -1,38 +1,51 @@
 language: cpp
+os: linux
 dist: trusty
-sudo: required
+sudo: false
 
 branches:
   only:
-    - travis
+    - master
+
+cache:
+  apt: true
+
+addons:
+  apt:
+    packages: [libcppunit-dev, libxml2-dev]
+
+git:
+  submodules: false
+
+before_install:
+  - git submodule update --init --remote -- schemas
+  - if [ "$TRAVIS_OS_NAME" = "osx" ]; then brew update         ; fi
+  - if [ "$TRAVIS_OS_NAME" = "osx" ]; then brew install cppunit; fi
 
 matrix:
   include:
     - os: linux
+      dist: bionic
       compiler: gcc
-      env: COMPILER=g++-4.8 CCOMPILER=gcc-4.8 CMAKE_BUILD_TYPE=Release
-      addons:
-        apt:
-          sources: ['ubuntu-toolchain-r-test']
-          packages: [g++-4.8, gcc-4.8, libcppunit-dev, libxml2-dev]
 
     - os: linux
-      compiler: gcc
-      env: COMPILER=g++-6 CCOMPILER=gcc-6 CMAKE_BUILD_TYPE=Release
-      addons:
-        apt:
-          sources: ['ubuntu-toolchain-r-test']
-          packages: [g++-6, gcc-6, libcppunit-dev, libxml2-dev]
+      dist: bionic
+      compiler: clang
 
     - os: linux
+      dist: xenial
       compiler: gcc
-      env: COMPILER=g++-7 CCOMPILER=gcc-7 CMAKE_BUILD_TYPE=Release
-      addons:
-        apt:
-          sources: ['ubuntu-toolchain-r-test']
-          packages: [g++-7, gcc-7, libcppunit-dev, libxml2-dev]
+
+    - os: linux
+      dist: xenial
+      compiler: clang
+
+    - os: osx
+      osx_image: xcode11.2
+      compiler: clang
 
 script:
   - mkdir build
   - cd build
-  - cmake -DCMAKE_BUILD_TYPE=$CMAKE_BUILD_TYPE -DCMAKE_VERBOSE_MAKEFILE=ON -DCMAKE_CXX_COMPILER=$COMPILER -DCMAKE_C_COMPILER=$CCOMPILER .. && make
+  - cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_VERBOSE_MAKEFILE=ON ..
+  - cmake --build . --target all
